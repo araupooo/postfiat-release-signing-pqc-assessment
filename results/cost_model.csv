@@ -1,0 +1,6 @@
+scenario,sign_us_per_release_median,verify_us_per_verifier_median,sig_bytes_per_release,keygen_us_one_time_median,verify_cpu_ms_fleet_100,verify_cpu_ms_fleet_1000,verify_cpu_ms_fleet_10000,sig_bytes_fleet_100,sig_bytes_fleet_1000,sig_bytes_fleet_10000
+"Ed25519 alone (OpenSSL, measured)",52.839,140.972,64,54.552,14.097,140.972,1409.72,6400,64000,640000
+Hybrid Ed25519 + ML-DSA-65 (measured),139.669,190.366,3373,102.194,19.037,190.366,1903.66,337300,3373000,33730000
+"SLH-DSA-SHA2-128s (liboqs, measured)",692670.57,710.776,7856,91472.097,71.078,710.776,7107.76,785600,7856000,78560000
+"SLH-DSA-SHA2-128s (PQClean clean, measured)",847707.555,805.448,7856,108510.735,80.545,805.448,8054.48,785600,7856000,78560000
+"SLH-DSA-SHA2-128f (liboqs, measured)",33670.295,2005.969,17088,1415.873,200.597,2005.969,20059.69,1708800,17088000,170880000

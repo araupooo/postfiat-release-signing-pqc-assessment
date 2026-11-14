@@ -1,0 +1,12 @@
+{
+  "cpu": "AMD EPYC 9D25 126-Core Processor",
+  "cores": 4,
+  "os": "Ubuntu 24.04.5 LTS",
+  "gcc": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "cmake": "cmake version 3.28.3",
+  "python": "Python 3.12.3",
+  "openssl": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+  "liboqs": "0.16.0 (minimal build: ML-DSA-65 + SLH-DSA pure 128s/128f SHA2/SHAKE)",
+  "pqclean_commit": "0586a824fc0d49df0b6b6e9179d8d15d06d0974f",
+  "postfiatd_pinned_commit": "0085a1ff885d6a446369cf73a4430f75af22be55"
+}

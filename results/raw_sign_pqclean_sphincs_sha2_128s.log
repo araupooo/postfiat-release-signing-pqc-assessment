@@ -1,0 +1,8 @@
+--- SPHINCS+-sha2-128s-simple (PQClean clean, commit 0586a824fc0d49df0b6b6e9179d8d15d06d0974f) ---
+  sizes: pk=32 sk=64 sig=7856
+  correctness: PASS (sign/verify round-trip, tampered signature rejected; sig_len=7856)
+  keygen: median=108510.735 us/op (n=11)
+  sign:   median=847707.555 us/op (n=11)
+  verify: median=805.448 us/op (n=11)
+json written to results/signing_pqclean_sphincs_sha2_128s.json
+RESULT: PASS (exit 0)

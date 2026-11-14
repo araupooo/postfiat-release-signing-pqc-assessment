@@ -1,0 +1,28 @@
+sign_release: liboqs + OpenSSL release-signing harness
+host: gcc 13.3.0, liboqs 0.16.0 (minimal build, ML-DSA + SLH-DSA), OpenSSL 3.0.13
+artifact: 1 MiB deterministic payload, sha256=fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83, hash_time=2711.077 us
+ml-dsa-65: pk=1952 sk=4032 sig=3309 keygen=47.642 sign=136.475 verify=47.260 us, roundtrip=PASS
+slh-dsa-sha2-128s: pk=32 sk=64 sig=7856 keygen=91472.097 sign=692670.570 verify=710.776 us, roundtrip=PASS
+slh-dsa-shake-128s: pk=32 sk=64 sig=7856 keygen=166742.031 sign=1282924.657 verify=1177.146 us, roundtrip=PASS
+slh-dsa-sha2-128f: pk=32 sk=64 sig=17088 keygen=1415.873 sign=33670.295 verify=2005.969 us, roundtrip=PASS
+slh-dsa-shake-128f: pk=32 sk=64 sig=17088 keygen=2653.170 sign=62060.040 verify=3707.982 us, roundtrip=PASS
+ed25519: pk=32 sk=32 sig=64 keygen=54.552 sign=52.839 verify=140.972 us, roundtrip=PASS
+hybrid ed25519+ml-dsa-65: sig=3373 (64+3309) sign=139.669 verify=190.366 us, roundtrip=PASS
+N1 tampered manifest byte (hybrid): expected=bad-signature got=bad-signature PASS
+N2 tampered ML-DSA-65 signature byte (hybrid): expected=bad-signature got=bad-signature PASS
+N3 tampered Ed25519 signature byte (hybrid): expected=bad-signature got=bad-signature PASS
+N4 wrong ML-DSA-65 public key (hybrid): expected=bad-signature got=bad-signature PASS
+N5 rollback: manifest version 2, installed 3: expected=rollback got=rollback PASS
+N6 revoked key_id: expected=revoked-key got=revoked-key PASS
+N7 expired key (not_after in past): expected=expired-key got=expired-key PASS
+N8 clean manifest passes policy (control): expected=accept got=accept PASS
+N9 SLH-DSA-SHA2-128s control verify: expected=accept got=accept PASS
+N10 SLH-DSA-SHA2-128s tampered manifest byte: expected=bad-signature got=bad-signature PASS
+N11 SLH-DSA-SHA2-128s tampered signature byte: expected=bad-signature got=bad-signature PASS
+N12 SLH-DSA-SHA2-128s wrong public key: expected=bad-signature got=bad-signature PASS
+R1 v1 key signs manifest v3, installed v2: expected=accept got=accept PASS
+R2 v2 key signs manifest v4, installed v3: expected=accept got=accept PASS
+R3 old v3 manifest verified under v2 keys: expected=bad-signature got=bad-signature PASS
+R4 v1 key revoked: v3 manifest rejected: expected=revoked-key got=revoked-key PASS
+R5 v4 manifest still valid after v1 revocation: expected=accept got=accept PASS
+sign_release: all_checks_pass=true

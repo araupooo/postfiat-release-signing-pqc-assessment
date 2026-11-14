@@ -1,0 +1,79 @@
+{
+  "model": "derived arithmetic from measured medians (this pack)",
+  "fleet_sizes_assumption": "100 / 1,000 / 10,000 verifiers per release (assumptions, labelled; not measured)",
+  "sign_once_verify_many": "the signer signs once per release; every verifier verifies once",
+  "per_release_per_verifier": [
+    {
+      "scenario": "Ed25519 alone (OpenSSL, measured)",
+      "sign_us_per_release_median": 52.839,
+      "verify_us_per_verifier_median": 140.972,
+      "sig_bytes_per_release": 64,
+      "keygen_us_one_time_median": 54.552,
+      "verify_cpu_ms_fleet_100": 14.097,
+      "sig_bytes_fleet_100": 6400,
+      "verify_cpu_ms_fleet_1000": 140.972,
+      "sig_bytes_fleet_1000": 64000,
+      "verify_cpu_ms_fleet_10000": 1409.72,
+      "sig_bytes_fleet_10000": 640000
+    },
+    {
+      "scenario": "Hybrid Ed25519 + ML-DSA-65 (measured)",
+      "sign_us_per_release_median": 139.669,
+      "verify_us_per_verifier_median": 190.366,
+      "sig_bytes_per_release": 3373,
+      "keygen_us_one_time_median": 102.194,
+      "verify_cpu_ms_fleet_100": 19.037,
+      "sig_bytes_fleet_100": 337300,
+      "verify_cpu_ms_fleet_1000": 190.366,
+      "sig_bytes_fleet_1000": 3373000,
+      "verify_cpu_ms_fleet_10000": 1903.66,
+      "sig_bytes_fleet_10000": 33730000
+    },
+    {
+      "scenario": "SLH-DSA-SHA2-128s (liboqs, measured)",
+      "sign_us_per_release_median": 692670.57,
+      "verify_us_per_verifier_median": 710.776,
+      "sig_bytes_per_release": 7856,
+      "keygen_us_one_time_median": 91472.097,
+      "verify_cpu_ms_fleet_100": 71.078,
+      "sig_bytes_fleet_100": 785600,
+      "verify_cpu_ms_fleet_1000": 710.776,
+      "sig_bytes_fleet_1000": 7856000,
+      "verify_cpu_ms_fleet_10000": 7107.76,
+      "sig_bytes_fleet_10000": 78560000
+    },
+    {
+      "scenario": "SLH-DSA-SHA2-128s (PQClean clean, measured)",
+      "sign_us_per_release_median": 847707.555,
+      "verify_us_per_verifier_median": 805.448,
+      "sig_bytes_per_release": 7856,
+      "keygen_us_one_time_median": 108510.735,
+      "verify_cpu_ms_fleet_100": 80.545,
+      "sig_bytes_fleet_100": 785600,
+      "verify_cpu_ms_fleet_1000": 805.448,
+      "sig_bytes_fleet_1000": 7856000,
+      "verify_cpu_ms_fleet_10000": 8054.48,
+      "sig_bytes_fleet_10000": 78560000
+    },
+    {
+      "scenario": "SLH-DSA-SHA2-128f (liboqs, measured)",
+      "sign_us_per_release_median": 33670.295,
+      "verify_us_per_verifier_median": 2005.969,
+      "sig_bytes_per_release": 17088,
+      "keygen_us_one_time_median": 1415.873,
+      "verify_cpu_ms_fleet_100": 200.597,
+      "sig_bytes_fleet_100": 1708800,
+      "verify_cpu_ms_fleet_1000": 2005.969,
+      "sig_bytes_fleet_1000": 17088000,
+      "verify_cpu_ms_fleet_10000": 20059.69,
+      "sig_bytes_fleet_10000": 170880000
+    }
+  ],
+  "ratios_vs_hybrid": {
+    "slh_dsa_sha2_128s_verify_us_over_hybrid_verify_us_liboqs": 3.73,
+    "slh_dsa_sha2_128s_sig_bytes_over_hybrid_sig_bytes": 2.33,
+    "slh_dsa_sha2_128f_sig_bytes_over_hybrid_sig_bytes": 5.07,
+    "slh_dsa_sha2_128s_sign_us_over_hybrid_sign_us_liboqs": 4959.4,
+    "slh_dsa_sha2_128s_keygen_us_over_hybrid_keygen_us_liboqs": 895.1
+  }
+}
