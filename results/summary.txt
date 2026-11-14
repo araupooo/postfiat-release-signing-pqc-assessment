@@ -1,0 +1,33 @@
+Post-quantum release-signing assessment for PFTL
+Host: AMD EPYC 9D25 126-Core Processor, 4 cores
+OS: Ubuntu 24.04.5 LTS
+Toolchain: gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, cmake version 3.28.3, Python Python 3.12.3, OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)
+liboqs 0.16.0 (minimal build: ML-DSA-65 + SLH-DSA pure 128s/128f); PQClean commit 0586a824fc0d49df0b6b6e9179d8d15d06d0974f (clean)
+Correctness: 6/6 liboqs + 5/5 PQClean round-trips PASS; 12/12 negative tests PASS; 5/5 rotation-drill steps PASS
+Sizes: all 10 size rows MATCH FIPS 204 Table 2 / FIPS 205 Table 2
+
+Median microseconds per operation (liboqs | PQClean clean):
+  ML-DSA-65 keygen 47.642 | 269.624; sign 136.475 | 917.155; verify 47.260 | 241.773
+  SLH-DSA-SHA2-128s keygen 91472.097 | 108510.735; sign 692670.570 | 847707.555; verify 710.776 | 805.448
+  SLH-DSA-SHAKE-128s keygen 166742.031 | 243960.129; sign 1282924.657 | 1872710.000; verify 1177.146 | 1691.808
+  SLH-DSA-SHA2-128f keygen 1415.873 | 2579.089; sign 33670.295 | 56852.949; verify 2005.969 | 3327.451
+  SLH-DSA-SHAKE-128f keygen 2653.170 | 3727.792; sign 62060.040 | 89146.539; verify 3707.982 | 5410.406
+  Ed25519 (OpenSSL): keygen 54.552; sign 52.839; verify 140.972
+  Hybrid Ed25519 + ML-DSA-65: sig 3,373 bytes; sign 139.669 us; verify 190.366 us
+
+Headline comparison (liboqs medians, this host):
+  Hybrid verify 190.366 us vs SLH-DSA-SHA2-128s verify 710.776 us (3.73x);
+  Hybrid sign 139.669 us vs SLH-DSA-SHA2-128s sign 692670.570 us (4959.4x);
+  Hybrid signature 3,373 bytes vs SLH-DSA-128s 7,856 bytes (2.33x) and SLH-DSA-128f 17,088 bytes (5.07x);
+  Hybrid keygen 102.194 us (Ed25519 + ML-DSA-65) vs SLH-DSA-128s keygen 91472.097 us (895.1x).
+
+Recommendation: hybrid Ed25519 + ML-DSA-65 for release signing; SLH-DSA-128s
+as the hash-based fallback. See release_signing_assessment.md for the design,
+phased costs, rollback protection and key-compromise response.
+
+Negative tests: 12/12 PASS (tampered manifest, tampered signatures, wrong key,
+rollback, revoked key, expired key, for hybrid and SLH-DSA-SHA2-128s).
+Rotation drill: 5/5 PASS (new key signs new manifest, old manifest fails under
+new key, revocation blocks the old key, new manifest unaffected).
+
+Reproduction: bash run_all.sh (offline, from the vendored results JSON).

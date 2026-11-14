@@ -1,0 +1,7 @@
+{
+  "implementation": "pqclean",
+  "pqclean_commit": "0586a824fc0d49df0b6b6e9179d8d15d06d0974f",
+  "results": [
+    {"algorithm": "ML-DSA-65", "type": "sig","pk_bytes": 1952, "sk_bytes": 4032, "sig_bytes": 3309, "correctness": "PASS", "keygen_us": {"median": 269.624}, "sign_us": {"median": 917.155}, "verify_us": {"median": 241.773}}
+  ]
+}

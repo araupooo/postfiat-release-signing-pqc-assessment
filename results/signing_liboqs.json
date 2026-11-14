@@ -1,0 +1,37 @@
+{
+  "tool": "sign_release (liboqs 0.16.0 + OpenSSL 3.0.13)",
+  "artifact": {"name": "postfiatd-testnet-full-1.0.9.tar.gz", "bytes": 1048576, "sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83", "hash_us": 2711.077},
+  "manifest": {"format": "PFTL-RELEASE-MANIFEST-v1, fields artifact/version/artifact_sha256/key_id/not_after", "version_signed": 3, "key_id": "7c57320fc6166847"},
+  "iterations": {"keygen": 5, "sign_verify": 11},
+  "schemes": [
+    {"name": "ed25519", "implementation": "OpenSSL 3.0.13", "pk_bytes": 32, "sk_bytes": 32, "sig_bytes": 64, "keygen_us": 54.552, "sign_us": 52.839, "verify_us": 140.972, "correctness": "PASS"},
+    {"name": "ml-dsa-65", "implementation": "liboqs 0.16.0", "pk_bytes": 1952, "sk_bytes": 4032, "sig_bytes": 3309, "keygen_us": 47.642, "sign_us": 136.475, "verify_us": 47.260, "correctness": "PASS"},
+    {"name": "slh-dsa-sha2-128s", "implementation": "liboqs 0.16.0", "pk_bytes": 32, "sk_bytes": 64, "sig_bytes": 7856, "keygen_us": 91472.097, "sign_us": 692670.570, "verify_us": 710.776, "correctness": "PASS"},
+    {"name": "slh-dsa-shake-128s", "implementation": "liboqs 0.16.0", "pk_bytes": 32, "sk_bytes": 64, "sig_bytes": 7856, "keygen_us": 166742.031, "sign_us": 1282924.657, "verify_us": 1177.146, "correctness": "PASS"},
+    {"name": "slh-dsa-sha2-128f", "implementation": "liboqs 0.16.0", "pk_bytes": 32, "sk_bytes": 64, "sig_bytes": 17088, "keygen_us": 1415.873, "sign_us": 33670.295, "verify_us": 2005.969, "correctness": "PASS"},
+    {"name": "slh-dsa-shake-128f", "implementation": "liboqs 0.16.0", "pk_bytes": 32, "sk_bytes": 64, "sig_bytes": 17088, "keygen_us": 2653.170, "sign_us": 62060.040, "verify_us": 3707.982, "correctness": "PASS"}
+  ],
+  "hybrid": {"name": "hybrid-ed25519-ml-dsa-65", "implementation": "OpenSSL 3.0.13 + liboqs 0.16.0", "sig_bytes": 3373, "sign_us": 139.669, "verify_us": 190.366, "correctness": "PASS"},
+  "negative_tests": [
+    {"id": "N1", "description": "tampered manifest byte (hybrid)", "expected": "bad-signature", "got": "bad-signature", "result": "PASS"},
+    {"id": "N2", "description": "tampered ML-DSA-65 signature byte (hybrid)", "expected": "bad-signature", "got": "bad-signature", "result": "PASS"},
+    {"id": "N3", "description": "tampered Ed25519 signature byte (hybrid)", "expected": "bad-signature", "got": "bad-signature", "result": "PASS"},
+    {"id": "N4", "description": "wrong ML-DSA-65 public key (hybrid)", "expected": "bad-signature", "got": "bad-signature", "result": "PASS"},
+    {"id": "N5", "description": "rollback: manifest version 2, installed 3", "expected": "rollback", "got": "rollback", "result": "PASS"},
+    {"id": "N6", "description": "revoked key_id", "expected": "revoked-key", "got": "revoked-key", "result": "PASS"},
+    {"id": "N7", "description": "expired key (not_after in past)", "expected": "expired-key", "got": "expired-key", "result": "PASS"},
+    {"id": "N8", "description": "clean manifest passes policy (control)", "expected": "accept", "got": "accept", "result": "PASS"},
+    {"id": "N9", "description": "SLH-DSA-SHA2-128s control verify", "expected": "accept", "got": "accept", "result": "PASS"},
+    {"id": "N10", "description": "SLH-DSA-SHA2-128s tampered manifest byte", "expected": "bad-signature", "got": "bad-signature", "result": "PASS"},
+    {"id": "N11", "description": "SLH-DSA-SHA2-128s tampered signature byte", "expected": "bad-signature", "got": "bad-signature", "result": "PASS"},
+    {"id": "N12", "description": "SLH-DSA-SHA2-128s wrong public key", "expected": "bad-signature", "got": "bad-signature", "result": "PASS"}
+  ],
+  "rotation_drill": [
+    {"id": "R1", "description": "v1 key signs manifest v3, installed v2", "expected": "accept", "got": "accept", "result": "PASS"},
+    {"id": "R2", "description": "v2 key signs manifest v4, installed v3", "expected": "accept", "got": "accept", "result": "PASS"},
+    {"id": "R3", "description": "old v3 manifest verified under v2 keys", "expected": "bad-signature", "got": "bad-signature", "result": "PASS"},
+    {"id": "R4", "description": "v1 key revoked: v3 manifest rejected", "expected": "revoked-key", "got": "revoked-key", "result": "PASS"},
+    {"id": "R5", "description": "v4 manifest still valid after v1 revocation", "expected": "accept", "got": "accept", "result": "PASS"}
+  ],
+  "all_checks_pass": true
+}

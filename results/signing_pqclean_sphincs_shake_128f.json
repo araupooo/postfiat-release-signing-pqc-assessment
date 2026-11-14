@@ -1,0 +1,7 @@
+{
+  "implementation": "pqclean",
+  "pqclean_commit": "0586a824fc0d49df0b6b6e9179d8d15d06d0974f",
+  "results": [
+    {"algorithm": "SPHINCS+-shake-128f-simple", "type": "sig","pk_bytes": 32, "sk_bytes": 64, "sig_bytes": 17088, "correctness": "PASS", "keygen_us": {"median": 3727.792}, "sign_us": {"median": 89146.539}, "verify_us": {"median": 5410.406}}
+  ]
+}
