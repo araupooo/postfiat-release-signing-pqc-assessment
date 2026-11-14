@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Post-Quantum Release-Signing Assessment for PFTL</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  max-width:960px;margin:2em auto;padding:0 1em;color:#111;line-height:1.5}
+h1{font-size:1.6em}h2{font-size:1.25em;margin-top:1.5em}
+table{border-collapse:collapse;width:100%;margin:1em 0}
+th,td{border:1px solid #ccc;padding:.35em .6em;text-align:left;
+  font-size:.92em}th{background:#f0f0f0}
+code{background:#f4f4f4;padding:0 .2em}
+.callout{background:#f7f3e8;border-left:4px solid #b58900;padding:.7em 1em}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em;
+  white-space:pre-wrap;word-break:break-word;background:#f8f8f8;
+  border:1px solid #ddd;padding:1em;overflow-x:auto}
+</style>
+</head>
+<body>
+<h1>Post-Quantum Release-Signing Assessment for PFTL</h1>
+<p>Measured signing costs for a hybrid Ed25519 + ML-DSA-65 release
+scheme against SLH-DSA, with negative tests, a key-rotation drill,
+and a mapping to the release and signing code in postfiatd (pinned
+commit <code>0085a1ff885d6a446369cf73a4430f75af22be55</code>).</p>
+
+<div class="callout"><strong>Headline finding.</strong> The hybrid
+scheme wins on every measured axis on this host. Hybrid verification
+costs <strong>190.366 &micro;s (median)</strong> against
+<strong>710.776 &micro;s</strong> for SLH-DSA-SHA2-128s (liboqs) —
+about 3.73&times; faster — and a hybrid signature is
+<strong>3,373 bytes</strong> against 7,856 bytes for SLH-DSA-128s
+and 17,088 bytes for SLH-DSA-128f. Signing is the starkest gap:
+hybrid signing costs 139.669 &micro;s while SLH-DSA-128s signing costs
+692670.570 &micro;s (liboqs), about 4959.4&times; more, because the
+small-signature SLH-DSA parameter sets trade signing time for size.
+Recommendation: sign releases with hybrid Ed25519 + ML-DSA-65 now,
+keep SLH-DSA-128s as the hash-based fallback in case lattice schemes
+fail.</div>
+
+<h2>Host and toolchain</h2>
+<table>
+<tr><th>Item</th><th>Value</th></tr>
+<tr><td>CPU</td><td>AMD EPYC 9D25 126-Core Processor (4 cores)</td></tr>
+<tr><td>OS</td><td>Ubuntu 24.04.5 LTS</td></tr>
+<tr><td>Compiler</td><td>gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0</td></tr>
+<tr><td>liboqs</td><td>0.16.0 — minimal build (ML-DSA-65 + SLH-DSA pure 128s/128f, SHA2 and SHAKE)</td></tr>
+<tr><td>PQClean</td><td>commit 0586a824fc0d49df0b6b6e9179d8d15d06d0974f — portable-C <code>clean</code> reference implementations</td></tr>
+<tr><td>OpenSSL (Ed25519 baseline)</td><td>OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)</td></tr>
+<tr><td>OpenSSL 3.5 (third implementation)</td><td>NOT MEASURED — see claim index</td></tr>
+</table>
+
+<h2>Timing table (median &micro;s per operation)</h2>
+<p>Each operation is the median of 11 single-shot measurements
+(<code>clock_gettime(CLOCK_MONOTONIC)</code>). liboqs runs its
+optimized x86_64 path; PQClean <code>clean</code> is portable C — the
+ratio column compares an optimized implementation against a
+reference, not two equals. The manifest signed is a canonical
+<code>PFTL-RELEASE-MANIFEST-v1</code> document (artifact name,
+version, artifact SHA-256, key id, not-after); the artifact hashed
+is a deterministic 1 MiB payload (SHA-256 2711.077 &micro;s). Full
+statistics and unedited raw logs are in <code>results/</code>.</p>
+<table>
+<tr><th>Algorithm</th><th>Operation</th><th>liboqs median (&micro;s)</th>
+<th>PQClean median (&micro;s)</th><th>PQClean / liboqs</th><th>OpenSSL median (&micro;s)</th><th>Hybrid median (&micro;s)</th></tr>
+<tr><td>ML-DSA-65</td><td>keygen</td><td>47.642</td><td>269.624</td><td>5.66</td><td>-</td><td>-</td></tr>
+<tr><td>ML-DSA-65</td><td>sign</td><td>136.475</td><td>917.155</td><td>6.72</td><td>-</td><td>-</td></tr>
+<tr><td>ML-DSA-65</td><td>verify</td><td>47.260</td><td>241.773</td><td>5.12</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHA2-128s</td><td>keygen</td><td>91472.097</td><td>108510.735</td><td>1.19</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHA2-128s</td><td>sign</td><td>692670.570</td><td>847707.555</td><td>1.22</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHA2-128s</td><td>verify</td><td>710.776</td><td>805.448</td><td>1.13</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHAKE-128s</td><td>keygen</td><td>166742.031</td><td>243960.129</td><td>1.46</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHAKE-128s</td><td>sign</td><td>1282924.657</td><td>1872710.000</td><td>1.46</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHAKE-128s</td><td>verify</td><td>1177.146</td><td>1691.808</td><td>1.44</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHA2-128f</td><td>keygen</td><td>1415.873</td><td>2579.089</td><td>1.82</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHA2-128f</td><td>sign</td><td>33670.295</td><td>56852.949</td><td>1.69</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHA2-128f</td><td>verify</td><td>2005.969</td><td>3327.451</td><td>1.66</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHAKE-128f</td><td>keygen</td><td>2653.170</td><td>3727.792</td><td>1.41</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHAKE-128f</td><td>sign</td><td>62060.040</td><td>89146.539</td><td>1.44</td><td>-</td><td>-</td></tr>
+<tr><td>SLH-DSA-SHAKE-128f</td><td>verify</td><td>3707.982</td><td>5410.406</td><td>1.46</td><td>-</td><td>-</td></tr>
+<tr><td>Ed25519</td><td>keygen</td><td>-</td><td>-</td><td>-</td><td>54.552</td><td>-</td></tr>
+<tr><td>Ed25519</td><td>sign</td><td>-</td><td>-</td><td>-</td><td>52.839</td><td>-</td></tr>
+<tr><td>Ed25519</td><td>verify</td><td>-</td><td>-</td><td>-</td><td>140.972</td><td>-</td></tr>
+<tr><td>hybrid-ed25519-ml-dsa-65</td><td>sign</td><td>-</td><td>-</td><td>-</td><td>-</td><td>139.669</td></tr>
+<tr><td>hybrid-ed25519-ml-dsa-65</td><td>verify</td><td>-</td><td>-</td><td>-</td><td>-</td><td>190.366</td></tr>
+</table>
+
+<h2>Size table (bytes)</h2>
+<p>FIPS 204 Table 2 (ML-DSA-65) and FIPS 205 Table 2 (SLH-DSA), both
+published 13 August 2024; SLH-DSA private-key length 4n bytes and
+public-key length 2n bytes per FIPS 205 section 3.2. Every measured
+size matches the standard. The hybrid row is the sum of its two
+components (Ed25519 32/32/64 + ML-DSA-65 1,952/4,032/3,309).</p>
+<table>
+<tr><th>Algorithm</th><th>Implementation</th><th>Category</th>
+<th>pk</th><th>sk</th><th>sig</th><th>Verdict</th></tr>
+<tr><td>ML-DSA-65</td><td>liboqs</td><td>3</td><td>1952</td><td>4032</td><td>3309</td><td>MATCH</td></tr>
+<tr><td>ML-DSA-65</td><td>pqclean</td><td>3</td><td>1952</td><td>4032</td><td>3309</td><td>MATCH</td></tr>
+<tr><td>SLH-DSA-SHA2-128s</td><td>liboqs</td><td>1</td><td>32</td><td>64</td><td>7856</td><td>MATCH</td></tr>
+<tr><td>SLH-DSA-SHA2-128s</td><td>pqclean</td><td>1</td><td>32</td><td>64</td><td>7856</td><td>MATCH</td></tr>
+<tr><td>SLH-DSA-SHAKE-128s</td><td>liboqs</td><td>1</td><td>32</td><td>64</td><td>7856</td><td>MATCH</td></tr>
+<tr><td>SLH-DSA-SHAKE-128s</td><td>pqclean</td><td>1</td><td>32</td><td>64</td><td>7856</td><td>MATCH</td></tr>
+<tr><td>SLH-DSA-SHA2-128f</td><td>liboqs</td><td>1</td><td>32</td><td>64</td><td>17088</td><td>MATCH</td></tr>
+<tr><td>SLH-DSA-SHA2-128f</td><td>pqclean</td><td>1</td><td>32</td><td>64</td><td>17088</td><td>MATCH</td></tr>
+<tr><td>SLH-DSA-SHAKE-128f</td><td>liboqs</td><td>1</td><td>32</td><td>64</td><td>17088</td><td>MATCH</td></tr>
+<tr><td>SLH-DSA-SHAKE-128f</td><td>pqclean</td><td>1</td><td>32</td><td>64</td><td>17088</td><td>MATCH</td></tr>
+</table>
+
+<h2>Release cost model (derived)</h2>
+<p>Per release, per verifier, from the measured medians. The signer
+signs once per release; every verifier verifies once. Fleet sizes
+(100 / 1,000 / 10,000 verifiers) are assumptions, labelled as such.
+See <code>results/cost_model.json</code> for the machine-readable
+form and <code>release_signing_assessment.md</code> for the design.</p>
+<table>
+<tr><th>Scenario</th><th>Sign (&micro;s/release)</th><th>Verify (&micro;s/verifier)</th>
+<th>Signature bytes / release</th><th>Verify CPU, 1,000 verifiers (ms)</th><th>Verify CPU, 10,000 verifiers (ms)</th></tr>
+<tr><td>Ed25519 alone (OpenSSL, measured)</td><td>52.839</td><td>140.972</td><td>64</td><td>140.972</td><td>1409.720</td></tr>
+<tr><td>Hybrid Ed25519 + ML-DSA-65 (measured)</td><td>139.669</td><td>190.366</td><td>3373</td><td>190.366</td><td>1903.660</td></tr>
+<tr><td>SLH-DSA-SHA2-128s (liboqs, measured)</td><td>692670.570</td><td>710.776</td><td>7856</td><td>710.776</td><td>7107.760</td></tr>
+<tr><td>SLH-DSA-SHA2-128s (PQClean clean, measured)</td><td>847707.555</td><td>805.448</td><td>7856</td><td>805.448</td><td>8054.480</td></tr>
+<tr><td>SLH-DSA-SHA2-128f (liboqs, measured)</td><td>33670.295</td><td>2005.969</td><td>17088</td><td>2005.969</td><td>20059.690</td></tr>
+</table>
+
+<h2>Negative tests (12/12 PASS)</h2>
+<p>Each test asserts the verifier rejects the manifest with the
+expected reason. Run by <code>harness/sign_release.c</code>; raw log
+<code>results/raw_sign_liboqs.log</code>.</p>
+<table>
+<tr><th>ID</th><th>Test</th><th>Expected</th><th>Got</th><th>Result</th></tr>
+<tr><td>N1</td><td>tampered manifest byte (hybrid)</td><td>bad-signature</td><td>bad-signature</td><td>PASS</td></tr>
+<tr><td>N2</td><td>tampered ML-DSA-65 signature byte (hybrid)</td><td>bad-signature</td><td>bad-signature</td><td>PASS</td></tr>
+<tr><td>N3</td><td>tampered Ed25519 signature byte (hybrid)</td><td>bad-signature</td><td>bad-signature</td><td>PASS</td></tr>
+<tr><td>N4</td><td>wrong ML-DSA-65 public key (hybrid)</td><td>bad-signature</td><td>bad-signature</td><td>PASS</td></tr>
+<tr><td>N5</td><td>rollback: manifest version 2, installed 3</td><td>rollback</td><td>rollback</td><td>PASS</td></tr>
+<tr><td>N6</td><td>revoked key_id</td><td>revoked-key</td><td>revoked-key</td><td>PASS</td></tr>
+<tr><td>N7</td><td>expired key (not_after in past)</td><td>expired-key</td><td>expired-key</td><td>PASS</td></tr>
+<tr><td>N8</td><td>clean manifest passes policy (control)</td><td>accept</td><td>accept</td><td>PASS</td></tr>
+<tr><td>N9</td><td>SLH-DSA-SHA2-128s control verify</td><td>accept</td><td>accept</td><td>PASS</td></tr>
+<tr><td>N10</td><td>SLH-DSA-SHA2-128s tampered manifest byte</td><td>bad-signature</td><td>bad-signature</td><td>PASS</td></tr>
+<tr><td>N11</td><td>SLH-DSA-SHA2-128s tampered signature byte</td><td>bad-signature</td><td>bad-signature</td><td>PASS</td></tr>
+<tr><td>N12</td><td>SLH-DSA-SHA2-128s wrong public key</td><td>bad-signature</td><td>bad-signature</td><td>PASS</td></tr>
+</table>
+
+<h2>Key-rotation drill (5/5 PASS)</h2>
+<p>Key v1 signs manifest v3 (installed v2); a new key v2 signs
+manifest v4 (installed v3); the old manifest fails under the new
+key; revoking v1 blocks the old manifest; the new manifest is
+unaffected by the v1 revocation.</p>
+<table>
+<tr><th>ID</th><th>Step</th><th>Expected</th><th>Got</th><th>Result</th></tr>
+<tr><td>R1</td><td>v1 key signs manifest v3, installed v2</td><td>accept</td><td>accept</td><td>PASS</td></tr>
+<tr><td>R2</td><td>v2 key signs manifest v4, installed v3</td><td>accept</td><td>accept</td><td>PASS</td></tr>
+<tr><td>R3</td><td>old v3 manifest verified under v2 keys</td><td>bad-signature</td><td>bad-signature</td><td>PASS</td></tr>
+<tr><td>R4</td><td>v1 key revoked: v3 manifest rejected</td><td>revoked-key</td><td>revoked-key</td><td>PASS</td></tr>
+<tr><td>R5</td><td>v4 manifest still valid after v1 revocation</td><td>accept</td><td>accept</td><td>PASS</td></tr>
+</table>
+
+<h2>Call-site mapping</h2>
+<p>postfiatd has no release-artifact signing: <code>docs/RELEASE.md</code>
+describes a version-string + Docker-tag + GitHub Release process with
+no artifact signatures or checksums. The closest real code is the
+validator manifest system — <code>src/xrpld/app/misc/Manifest.h:66-77</code>
+(ephemeral-key compromise response and revocation) and
+<code>src/xrpld/app/misc/detail/Manifest.cpp:196</code>
+(<code>Manifest::verify</code>) — and transaction/validation signing
+in <code>src/libxrpl/protocol/SecretKey.cpp:230-276</code>
+(<code>signDigest</code> secp256k1, <code>sign</code> Ed25519) and
+<code>src/libxrpl/protocol/STValidation.cpp:131-141</code>
+(validation <code>verifyDigest</code>). Full mapping in
+<code>call_sites.md</code>.</p>
+
+<h2>Digest-check output</h2>
+<p>Raw output of <code>bash verify_digests.sh --check</code> (SHA-256
+manifest over every pack file except the manifest itself):</p>
+<pre class="mono">./README.md: OK
+./REPRODUCTION.md: OK
+./build_derived.py: OK
+./call_sites.md: OK
+./claim_evidence_index.md: OK
+./docs/index.html: OK
+./harness/build_signing.sh: OK
+./harness/run_signing.sh: OK
+./harness/sign_pqclean.c: OK
+./harness/sign_release.c: OK
+./release_signing_assessment.md: OK
+./results/cost_model.csv: OK
+./results/cost_model.json: OK
+./results/digest_check_output.txt: OK
+./results/environment.json: OK
+./results/raw_sign_liboqs.log: OK
+./results/raw_sign_pqclean_mldsa65.log: OK
+./results/raw_sign_pqclean_sphincs_sha2_128f.log: OK
+./results/raw_sign_pqclean_sphincs_sha2_128s.log: OK
+./results/raw_sign_pqclean_sphincs_shake_128f.log: OK
+./results/raw_sign_pqclean_sphincs_shake_128s.log: OK
+./results/run_log.txt: OK
+./results/signing_liboqs.json: OK
+./results/signing_pqclean_mldsa65.json: OK
+./results/signing_pqclean_sphincs_sha2_128f.json: OK
+./results/signing_pqclean_sphincs_sha2_128s.json: OK
+./results/signing_pqclean_sphincs_shake_128f.json: OK
+./results/signing_pqclean_sphincs_shake_128s.json: OK
+./results/size_table.csv: OK
+./results/size_table.md: OK
+./results/summary.txt: OK
+./results/timing_table.csv: OK
+./results/timing_table.md: OK
+./run_all.sh: OK
+./sources.md: OK
+./sources/NIST.FIPS.204.pdf: OK
+./sources/NIST.FIPS.205.pdf: OK
+./verify_digests.sh: OK
+</pre>
+
+<h2>Run-log tail</h2>
+<p>Tail of <code>results/run_log.txt</code> — the raw console log of
+the fresh-copy reproduction run (<code>bash run_all.sh</code>, exit 0):</p>
+<pre class="mono">./README.md: OK
+./REPRODUCTION.md: OK
+./build_derived.py: OK
+./call_sites.md: OK
+./claim_evidence_index.md: OK
+./docs/index.html: OK
+./harness/build_signing.sh: OK
+./harness/run_signing.sh: OK
+./harness/sign_pqclean.c: OK
+./harness/sign_release.c: OK
+./release_signing_assessment.md: OK
+./results/cost_model.csv: OK
+./results/cost_model.json: OK
+./results/digest_check_output.txt: OK
+./results/environment.json: OK
+./results/raw_sign_liboqs.log: OK
+./results/raw_sign_pqclean_mldsa65.log: OK
+./results/raw_sign_pqclean_sphincs_sha2_128f.log: OK
+./results/raw_sign_pqclean_sphincs_sha2_128s.log: OK
+./results/raw_sign_pqclean_sphincs_shake_128f.log: OK
+./results/raw_sign_pqclean_sphincs_shake_128s.log: OK
+./results/run_log.txt: OK
+./results/signing_liboqs.json: OK
+./results/signing_pqclean_mldsa65.json: OK
+./results/signing_pqclean_sphincs_sha2_128f.json: OK
+./results/signing_pqclean_sphincs_sha2_128s.json: OK
+./results/signing_pqclean_sphincs_shake_128f.json: OK
+./results/signing_pqclean_sphincs_shake_128s.json: OK
+./results/size_table.csv: OK
+./results/size_table.md: OK
+./results/summary.txt: OK
+./results/timing_table.csv: OK
+./results/timing_table.md: OK
+./run_all.sh: OK
+./sources.md: OK
+./sources/NIST.FIPS.204.pdf: OK
+./sources/NIST.FIPS.205.pdf: OK
+./verify_digests.sh: OK
+verify_digests.sh: SHA256SUMS regenerated and verified
+run_all.sh: OK</pre>
+
+<h2>Reproduction</h2>
+<p class="mono">bash run_all.sh</p>
+<p>Regenerates every derived output offline from the vendored results
+JSON (<code>results/signing_*.json</code>), rebuilds this page, and
+verifies digests. Expected: exit 0, byte-identical outputs. See
+<code>REPRODUCTION.md</code> for the exact command and recorded
+result. To re-run the signing measurements themselves (not part of
+the offline reproduction — timings vary run to run), see
+<code>harness/build_signing.sh</code> and
+<code>harness/run_signing.sh</code>.</p>
+
+<h2>Files</h2>
+<ul>
+<li><code>results/signing_liboqs.json</code>,
+<code>results/signing_pqclean_*.json</code> — vendored raw signing
+results (JSON)</li>
+<li><code>results/raw_sign_liboqs.log</code>,
+<code>results/raw_sign_pqclean_*.log</code> — unedited raw console logs</li>
+<li><code>results/timing_table.csv</code> /
+<code>timing_table.md</code>, <code>results/size_table.csv</code> /
+<code>size_table.md</code> — derived tables</li>
+<li><code>results/cost_model.json</code> / <code>cost_model.csv</code> —
+derived release cost model</li>
+<li><code>results/summary.txt</code> — headline numbers in plain text</li>
+<li><code>results/environment.json</code> — host, toolchain, versions</li>
+<li><code>results/digest_check_output.txt</code>,
+<code>results/run_log.txt</code> — digest-check output, reproduction log</li>
+<li><code>harness/sign_release.c</code>,
+<code>harness/sign_pqclean.c</code> — signing drivers</li>
+<li><code>harness/build_signing.sh</code>,
+<code>harness/run_signing.sh</code> — build / run scripts</li>
+<li><code>call_sites.md</code> — measurement-to-call-site mapping</li>
+<li><code>release_signing_assessment.md</code> — hybrid design,
+rotation/revocation, phased costs, forward-only activation, rollback,
+exposure-ranked priorities</li>
+<li><code>claim_evidence_index.md</code> — measured vs source-derived
+claims, separated, with file:line and output-file references</li>
+<li><code>sources.md</code> — primary sources and version pins</li>
+<li><code>sources/NIST.FIPS.204.pdf</code>,
+<code>sources/NIST.FIPS.205.pdf</code> — vendored standards</li>
+</ul>
+
+<h2>Limitations</h2>
+<ul>
+<li>Timings are for this host and toolchain only (shared virtual CPU,
+gcc 13.3.0, -O2). They do not transfer to release or validator
+hardware; the ratios between schemes on one host are the portable
+part. SLH-DSA-128s signing is slow in both reference implementations
+here (hundreds of milliseconds to over a second); optimized
+implementations would be faster, but the ordering (128f much faster
+to sign than 128s, hybrid fastest) is structural.</li>
+<li>liboqs uses its optimized x86_64 path; PQClean <code>clean</code> is
+portable C. A production deployment would use optimized code for both
+schemes; the PQClean numbers are a conservative upper bound.</li>
+<li>OpenSSL 3.5 was not measured (see the claim index): the system
+OpenSSL is 3.0.13, which has no native ML-DSA or SLH-DSA.</li>
+<li>The test keys are ephemeral, generated fresh on every run, and
+never written to disk. The manifest format is a proposal for the
+assessment, not a deployed format.</li>
+<li>No release was signed or published for postfiatd; no ledger was
+compiled or run locally.</li>
+</ul>
+</body>
+</html>
